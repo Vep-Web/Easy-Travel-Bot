@@ -8,43 +8,27 @@ HEADERS = {
     'X-RapidAPI-Key': RAPID_API_KEY
 }
 
+
 URL_SEARCH = 'https://hotels4.p.rapidapi.com/locations/v2/search'
 URL_PROPERTY_LIST = 'https://hotels4.p.rapidapi.com/properties/list'
 URL_PHOTO = 'https://hotels4.p.rapidapi.com/properties/get-hotel-photos'
 URL_HOTEL = 'https://hotels4.p.rapidapi.com/properties/get-details'
 
 
-QUERY_SEARCH = {
-    'query': 'new_york',
-    'locale': 'en_US',
-    'currency': 'USD'
-}
-QUERY_PROPERTY_LIST = {
-    'destinationId': '1506246',
-    'pageNumber': '1',
-    'pageSize': '25',
-    'checkIn': '2020-01-08',
-    'checkOut': '2020-01-15',
-    'adults1': '1',
-    'sortOrder': 'PRICE',
-    'locale': 'en_US',
-    'currency': 'USD'
-}
-
-QUERY_HOTELS = {
-    'id': 242213,
-    'name': 'Super 8 by Wyndham Paris IL',
-    'address': '11642 Illinois Hwy 1',
-    'price' : '$64',
-    'City center distance': '2.1 miles'
-
-}
-
-QUERY_PHOTO = {'id': '1178275040'}
+QUERY_SEARCH = dict()
+QUERY_PROPERTY_LIST = dict()
+QUERY_HOTELS = dict()
+QUERY_PHOTO = dict()
+hotels_list = list()
 
 
-def get_website_request_city(message: str):
-    """Функция обрабатывающая запрос пользователя для входа на сайт и поиск в нужном городе. """
+def get_website_request_city(message: str) -> list:
+    """
+    Функция делает get-запрос для поиска города и возвращает для уточнения пользователю ближайшие места поиска.
+
+    :param message: str
+    :return: list
+    """
     QUERY_SEARCH["query"] = message
 
     response = requests.get(URL_SEARCH, headers=HEADERS, params=QUERY_SEARCH, timeout=10)
@@ -61,25 +45,74 @@ def get_website_request_city(message: str):
             return cities
 
 
-def get_website_request_hotels(response):
-    """Функция обрабатывающая запрос пользователя поиск  отелей в нужном городе. """
-    # нужно достать id локации из response
-    print("answ", response)
-    QUERY_PROPERTY_LIST["destinationId"] = response
-    response_hotels = requests.request("GET", URL_PROPERTY_LIST, headers=HEADERS, params=QUERY_PROPERTY_LIST, timeout=10)
-    data = json.loads(response_hotels.text)
+def get_website_request_hotels(response: str) -> list:
+    """
+    Функция делает get-запрос для поиска отелей в выбранном городе и возвращает список найденных отелей.
 
-    hotels_list = list()
+    :param response: str
+    :return: list
+    """
+
+    QUERY_PROPERTY_LIST["destinationId"] = response
+    response_hotel = requests.request("GET", URL_PROPERTY_LIST, headers=HEADERS, params=QUERY_PROPERTY_LIST, timeout=10)
+    data = json.loads(response_hotel.text)
+
     for hotels in data["data"]["body"]["searchResults"]['results']:
 
-        hotels_list.append({'photo_id': hotels['id'],
-                            'name_hotel': hotels['name'],
-                            'address_hotel': hotels['address']['streetAddress'],
-                            'center_distance': hotels['landmarks'][0]['distance'],
-                            'price': hotels['ratePlan']['price']['current']})
+        try:
+            hotel_info = {'photo_id': hotels['id'],
+                          'name_hotel': hotels['name'],
+                          'address_hotel': hotels['address']['streetAddress'],
+                          'center_distance': hotels['landmarks'][0]['distance'],
+                          'price': hotels['ratePlan']['price']['current']
+                          }
+
+            hotels_list.append(hotel_info)
+
+        except KeyError:
+            pass
 
     return hotels_list
 
 
-x = get_website_request_city('рим')
-print(x[0]['destination_id'])
+def sorted_list_hotels(count_cities: str) -> list:
+    """
+    Функция сортирующая список отелей по цене.
+
+    :param count_cities: str
+    :return: list
+    """
+    final_list_hotels = list()
+    list_sorted = sorted(hotels_list, key=lambda x: int(x['price'].replace("$", '')), reverse=False)
+    move = 0
+    for hotels in list_sorted:
+        if move != int(count_cities):
+            final_list_hotels.append(hotels)
+            move += 1
+
+    return final_list_hotels
+
+
+def get_website_request_photo(list_hotels: list, count: str) -> list:
+    """
+    Функция делает get-запрос для поиска фотографий отелей.
+
+    :param list_hotels: list
+    :param count: str
+    :return: list
+    """
+    list_photo = list()
+
+    for hotel_info in list_hotels:
+        QUERY_PHOTO['id'] = hotel_info['photo_id']
+        response = requests.request("GET", URL_PHOTO, headers=HEADERS, params=QUERY_PHOTO, timeout=10)
+        data = json.loads(response.text)
+        move = 0
+
+        for info_images in data['hotelImages']:
+            if move != int(count):
+                images = info_images['baseUrl'].replace("{size}", "y")
+                list_photo.append(images)
+                move += 1
+
+    return list_photo
