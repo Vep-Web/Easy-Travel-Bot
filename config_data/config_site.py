@@ -35,12 +35,13 @@ def get_website_request_city(message: str) -> list:
     if response.status_code == requests.codes.ok:
         pattern = r'(?<="CITY_GROUP",).+?[\]]'
         find = re.search(pattern, response.text)
+
         if find:
             result = json.loads(f"{{{find[0]}}}")
-
             cities = list()
             for dest_id in result['entities']:
-                cities.append({'city_name': dest_id['caption'], 'destination_id': dest_id['destinationId']})
+                city = re.sub(r'<span.*?>', '', dest_id['caption']).replace('</span>', '')
+                cities.append({'city_name': city, 'destination_id': dest_id['destinationId']})
 
             return cities
 
@@ -116,3 +117,4 @@ def get_website_request_photo(list_hotels: list, count: str) -> list:
                 move += 1
 
     return list_photo
+

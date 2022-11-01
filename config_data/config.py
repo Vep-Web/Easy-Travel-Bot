@@ -11,6 +11,8 @@ RAPID_API_KEY = os.getenv('RAPID_API_KEY')
 DEFAULT_COMMANDS = (
     ('start', "Запустить бота"),
     ('help', "Вывести справк"),
-    ('lowprice', "Низкая цена")
+    ('lowprice', "Низкая цена"),
+    ('highprice', "Высокая цена"),
+    ('bestdeal', "Лучший вариант")
 )
 
