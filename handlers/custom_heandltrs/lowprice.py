@@ -55,9 +55,10 @@ def callback_inline_city(call):
     :param call: Message
     :return: None
     """
+    user = User.get_user(call.message.id)
 
     if call.data.isdigit():
-        get_website_request_hotels(call.data)
+        get_website_request_hotels(call.data, user)
         markup_num = count_markup()
         chat = bot.send_message(call.message.chat.id, f'Сколько отелей показать?', reply_markup=markup_num)
         bot.register_next_step_handler(chat, get_photo)

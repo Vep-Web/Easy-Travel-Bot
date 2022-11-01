@@ -2,6 +2,7 @@ from config_data.config import RAPID_API_KEY
 import requests
 import json
 import re
+from states.contact_info import User
 
 HEADERS = {
     'X-RapidAPI-Host': 'hotels4.p.rapidapi.com',
@@ -16,7 +17,7 @@ URL_HOTEL = 'https://hotels4.p.rapidapi.com/properties/get-details'
 
 
 QUERY_SEARCH = dict()
-QUERY_PROPERTY_LIST = dict()
+
 QUERY_HOTELS = dict()
 QUERY_PHOTO = dict()
 hotels_list = list()
@@ -46,15 +47,19 @@ def get_website_request_city(message: str) -> list:
             return cities
 
 
-def get_website_request_hotels(response: str) -> list:
+def get_website_request_hotels(response: str, user_id) -> list:
     """
     Функция делает get-запрос для поиска отелей в выбранном городе и возвращает список найденных отелей.
 
     :param response: str
     :return: list
     """
+    user = User.get_user(user_id)
+    QUERY_PROPERTY_LIST = {"destinationId": response,
+                           "checkIn": user.arrival_date,
+                           "checkOut": user.departure_date,
+                           "locale": "ru_RU"}
 
-    QUERY_PROPERTY_LIST["destinationId"] = response
     response_hotel = requests.request("GET", URL_PROPERTY_LIST, headers=HEADERS, params=QUERY_PROPERTY_LIST, timeout=10)
     data = json.loads(response_hotel.text)
 
@@ -117,4 +122,3 @@ def get_website_request_photo(list_hotels: list, count: str) -> list:
                 move += 1
 
     return list_photo
-
