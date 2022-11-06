@@ -1,6 +1,3 @@
-from telebot.handler_backends import State, StatesGroup
-
-
 class User:
     all_users = dict()
 
@@ -8,11 +5,15 @@ class User:
         self.user_id = user_id
         User.add_user(user_id=user_id, user=self)
         self.command: str = ""
+        self.flag = False
         self.city: str = ""
-        self.hotels_number_to_show: str = ''
-        self.photos_num = 0
+        self.hotels_number_to_show: str = ""
+        self.photos_num: str = ""
         self.arrival_date: str = ""
         self.departure_date: str = ""
+        self.min_price: str = ""
+        self.max_price: str = ""
+        self.range: str = ""
 
     @classmethod
     def add_user(cls, user_id, user):
