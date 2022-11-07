@@ -14,6 +14,7 @@ class User:
         self.min_price: str = ""
         self.max_price: str = ""
         self.range: str = ""
+        self.request_time: str = ""
 
     @classmethod
     def add_user(cls, user_id, user):

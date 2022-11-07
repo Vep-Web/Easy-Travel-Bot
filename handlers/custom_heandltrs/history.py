@@ -1,20 +1,20 @@
 from states.contact_info import User
 from loader import bot
 from config_data.config import my_db
-import peewee
+from peewee import CharField, Model, IntegerField, InternalError
 import telebot
 
 
-class BaseModel(peewee.Model):
+class BaseModel(Model):
     class Meta:
-        database = config.my_db
+        database = my_db ####!!!!! config
 
 
-class User_Data(BaseModel):
-    user_telegram_id = peewee.IntegerField()
-    user_command = peewee.CharField()
-    user_time_request = peewee.CharField()
-    user_hotels_list = peewee.CharField()
+class History(BaseModel):
+    user_telegram_id = IntegerField()
+    user_command = CharField()
+    user_time_request = CharField()
+    user_hotels_list = CharField()
 
 
 def create_db() -> None:
@@ -24,8 +24,8 @@ def create_db() -> None:
     """
     try:
         my_db.connect()
-        User_Data.create_table()
-    except peewee.InternalError as px:
+        History.create_table()
+    except InternalError as px:
         print(str(px))
 
 
@@ -40,7 +40,7 @@ def add_user_data(user_telegram_id, command, request_time, text_for_database) ->
     """
 
     with my_db:
-        User_Data.create(user_telegram_id=user_telegram_id,
+        History.create(user_telegram_id=user_telegram_id,
                          user_command=command,
                          user_time_request=request_time,
                          user_hotels_list=text_for_database
@@ -65,7 +65,7 @@ def show_history(message: telebot.types.Message) -> None:
 
     user = User.get_user(message.from_user.id)
     with my_db:
-        for data in User_Data.select().where(User_Data.user_telegram_id == user.user_id):
+        for data in History.select().where(History.user_telegram_id == user.user_id):
             history_to_show = f"Команда: {data.user_command}\n" \
                               f"Дата и время обращения: {data.user_time_request}\n" \
                               f"Список найденных отелей:\n{to_use_literals(data.user_hotels_list)}"

@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv, find_dotenv
-from peewee import *
+from peewee import MySQLDatabase
+
 
 if not find_dotenv():
     exit('Переменные окружения не загружены т.к отсутствует файл .env')
@@ -19,10 +20,9 @@ DEFAULT_COMMANDS = (
 )
 
 my_db = MySQLDatabase(
-    config("DB_name"),
+    os.getenv("DB_name"),
     user="root",
-    password=config("DB_password"),
+    password=os.getenv("DB_password"),
     host='localhost',
-    port=int(config("DB_port"))
-
+    port=int(os.getenv("DB_port"))
 )

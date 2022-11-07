@@ -4,9 +4,11 @@ from telebot.types import Message, InputMediaPhoto
 from config_data.config_site import get_website_request_hotels, sorted_list_hotels, get_website_request_photo
 from keyboards.reply.city import city_markup, count_markup, photo_markup
 from keyboards.reply.calendars import set_arrival_date
+from handlers.custom_heandltrs import history
+from datetime import datetime
 
 
-@bot.message_handler(commands=['lowprice', 'highprice', 'bestdeal'])
+@bot.message_handler(commands=['lowprice', 'highprice', 'bestdeal', 'history'])
 def start(message: Message) -> None:
     """
     Функция, запускающая команду: 'lowprice'. Начинает сбор информации по запросу и запрашивает город
@@ -19,23 +21,31 @@ def start(message: Message) -> None:
 
     if message.text == '/lowprice':
         user.command = message.text
+        user.request_time = datetime.now().strftime("%Y.%m.%d %H:%M:%S")
         bot.send_message(message.from_user.id, f'Отлично, Вы выбрали поиск отелей по низкой цене.')
         return set_arrival_date(message)
 
     elif message.text == '/highprice':
         user.flag = True
+        user.command = message.text
+        user.request_time = datetime.now().strftime("%Y.%m.%d %H:%M:%S")
         bot.send_message(message.from_user.id, f'Отлично, Вы выбрали поиск отелей по высокой цене.')
         return set_arrival_date(message)
 
     elif message.text == '/bestdeal':
+        user.command = message.text
+        user.request_time = datetime.now().strftime("%Y.%m.%d %H:%M:%S")
         bot.send_message(message.from_user.id, f'Отлично, Вы выбрали поиск лучших вариантов.')
         return set_arrival_date(message)
+
+    elif message.text == "/history":
+        history.show_history(message)
 
 
 #Проверка на ввод с клавиатуры
 def city(message) -> None:
-    x = message
     user = User.get_user(message.from_user.id)
+
     if message:
         if user.command == '/lowprice' or user.command == '/highprice':
             chat = bot.send_message(message.from_user.id, "Введите название города и я приступлю к поиску.")
@@ -158,6 +168,7 @@ def get_photo_count(message: Message) -> None:
     elif message.text == 'нет':
         bot.send_message(message.chat.id, f'Хорошо. Держи список отелей.')
         list_hotels = sorted_list_hotels(user.hotels_number_to_show, user.flag)
+        text_for_database = ""
 
         for hotel in list_hotels:
             text = f"Название отеля: {hotel['name_hotel']} \nАдрес: {hotel['address_hotel']}" \
@@ -165,6 +176,10 @@ def get_photo_count(message: Message) -> None:
                    f" \nЦена за период проживания c {user.arrival_date} по {user.departure_date}: " \
                    f"{hotel['price_for_period']} \nСайт отеля: {hotel['website']}"
             bot.send_message(message.from_user.id, "".join(text))
+
+            text_for_database += f"{hotel['name_hotel']};"
+
+        history.add_user_data(user.user_id, user.command, user.request_time, text_for_database)
 
     else:
         bot.send_message(message.from_user.id, f'Нужно нажать на кнопу.')
@@ -189,6 +204,7 @@ def final(message: Message) -> None:
         count_photo = message.text
         list_hotels = sorted_list_hotels(user.hotels_number_to_show, user.flag)
         list_photo = get_website_request_photo(list_hotels, count_photo)
+        text_for_database = ""
         media_group = list()
         index = 0
 
@@ -198,6 +214,8 @@ def final(message: Message) -> None:
                    f" \nЦена за период проживания c {user.arrival_date} по {user.departure_date}: " \
                    f"{hotel['price_for_period']} \nСайт отеля: {hotel['website']}"
 
+            text_for_database += f"{hotel['name_hotel']};"
+
             for i in range(int(count_photo)):
                 media_group.append(InputMediaPhoto(media=list_photo[index], caption=text if i == 0 else ''))
                 index += 1
@@ -205,20 +223,7 @@ def final(message: Message) -> None:
             bot.send_media_group(message.chat.id, media=media_group)
             media_group.clear()
 
-        text = f'Команда: {user.command}' \
-               f'ID пользователя: {user.user_id}' \
-               f'Город для поиска: {user.city}' \
-               f'Кол-во отелей: {user.hotels_number_to_show}' \
-               f'Кол-во фото: {user.photos_num}' \
-               f'Дата прибытия: {user.arrival_date}' \
-               f'Дата убытия: {user.departure_date}' \
-               f'Мин цена: {user.min_price}' \
-               f'Макс цена: {user.max_price}' \
-               f'Растояние до центра: {user.range}' \
-               f'Дата поиска' \
-               f'Отели поиск '#{list_hotels}
-
-        bot.send_message(message.from_user.id, text)
+        history.add_user_data(user.user_id, user.command, user.request_time, text_for_database)
 
     else:
         bot.send_message(message.from_user.id, f'Нужно нажать на кнопу.')
