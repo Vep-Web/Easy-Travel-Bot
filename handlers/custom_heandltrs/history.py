@@ -7,7 +7,7 @@ import telebot
 
 class BaseModel(Model):
     class Meta:
-        database = my_db ####!!!!! config
+        database = my_db
 
 
 class History(BaseModel):

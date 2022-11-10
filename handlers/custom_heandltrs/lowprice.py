@@ -11,8 +11,8 @@ from datetime import datetime
 @bot.message_handler(commands=['lowprice', 'highprice', 'bestdeal', 'history'])
 def start(message: Message) -> None:
     """
-    Функция, запускающая команду: 'lowprice'. Начинает сбор информации по запросу и запрашивает город
-    для поиска отелей.
+    Функция, запускающая команды: 'lowprice', 'highprice', 'bestdeal', 'history'. Начинает сбор информации по запросу и
+    запрашивает город для поиска отелей.
 
     :param message: Message
     :return: None
@@ -42,8 +42,13 @@ def start(message: Message) -> None:
         history.show_history(message)
 
 
-#Проверка на ввод с клавиатуры
 def city(message) -> None:
+    """
+    Функция запрашивает у пользователя город для поиска.
+
+    :param message: Message
+    :return: None
+    """
     user = User.get_user(message.from_user.id)
 
     if message:
@@ -56,30 +61,46 @@ def city(message) -> None:
 
 
 def get_min_price(message: Message) -> None:
+    """
+    Функция запрашивает у пользователя минимальную стоимость для поиска.
+
+    :param message: Message
+    :return: None
+    """
     user = User.get_user(message.from_user.id)
     if message.text.isdigit():
         user.min_price = message.text
         chat = bot.send_message(message.chat.id, f'Введите максимальную стоимость отеля в долларах.')
         bot.register_next_step_handler(chat, get_max_price)
     else:
-        chat = bot.send_message(message.chat.id, f'Стоимость не может быть буквой.') # авто переход на пред-щую функцию city
+        chat = bot.send_message(message.chat.id, f'Стоимость не может быть буквой.')
         bot.register_next_step_handler(chat, city)
 
 
-#@bot.message_handler(content_types='text')
 def get_max_price(message: Message) -> None:
+    """
+    Функция запрашивает у пользователя максимальную стоимость для поиска.
+
+    :param message: Message
+    :return: None
+    """
     user = User.get_user(message.from_user.id)
     if message.text.isdigit():
         user.max_price = message.text
-        chat = bot.send_message(message.from_user.id, f'Отлично, а теперь введите желаемое растояние до центра города в '
-                                                 f'километрах.')
+        chat = bot.send_message(message.from_user.id, f'Отлично, а теперь введите желаемое растояние до центра города в'
+                                                      f'километрах.')
         bot.register_next_step_handler(chat, get_range)
     else:
-        bot.send_message(message.chat.id, f'Стоимость не может быть буквой.') # авто переход на пред-щую функцию city
+        bot.send_message(message.chat.id, f'Стоимость не может быть буквой.')
 
 
-#@bot.message_handler(content_types='text')
 def get_range(message: Message) -> None:
+    """
+    Функция запрашивает у пользователя расстояние до центра города.
+
+    :param message: Message
+    :return: None
+    """
     user = User.get_user(message.from_user.id)
     if message.text.isdigit():
         user.range = message.text
@@ -89,7 +110,6 @@ def get_range(message: Message) -> None:
         bot.send_message(message.chat.id, f'Расстояние не может быть буквой.')
 
 
-#@bot.message_handler(content_types='text')
 def get_cities(message: Message) -> None:
     """
     Функция, проверяет входящий тип данных из предыдущей функции и уточняет более точный адрес.
@@ -128,7 +148,6 @@ def callback_inline_city(call):
         bot.send_message(call.message.from_user.id, f'Имя не может начинаться с числа.')
 
 
-#@bot.message_handler(content_types='text')
 def get_photo(message: Message) -> None:
     """
     Функция- обработчик reply-кнопок. Реагирует только на информацию из кнопок
@@ -149,7 +168,6 @@ def get_photo(message: Message) -> None:
         bot.send_message(message.from_user.id, f'Нужно нажать на кнопу.')
 
 
-#@bot.message_handler(content_types='text')
 def get_photo_count(message: Message) -> None:
     """
     Функция- обработчик reply-кнопок. Реагирует только на информацию из кнопок
@@ -185,12 +203,11 @@ def get_photo_count(message: Message) -> None:
         bot.send_message(message.from_user.id, f'Нужно нажать на кнопу.')
 
 
-#@bot.message_handler(content_types='text')
 def final(message: Message) -> None:
     """
     Функция- обработчик reply-кнопок. Реагирует только на информацию из кнопок
     и обрабатывает запрос от кнопок. Финальная функция завершающая сценарий, выводит пользователю результаты
-    его запросов.
+    его запросов и добавляет в историю поиска.
 
     :param message: Message
     :return: None
@@ -227,4 +244,3 @@ def final(message: Message) -> None:
 
     else:
         bot.send_message(message.from_user.id, f'Нужно нажать на кнопу.')
-

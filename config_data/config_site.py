@@ -25,6 +25,14 @@ hotels_list = list()
 
 
 def price_period(price: str, date_1: str, date_2: str):
+    """
+    Функция считает колличество дней и сумму за период.
+
+    :param price: str
+    :param date_1: str
+    :param date_2: str
+    :return: str
+    """
     d_1 = datetime.strptime(str(date_1), "%Y-%m-%d")
     d_2 = datetime.strptime(str(date_2), "%Y-%m-%d")
     date_delta = int((d_2 - d_1).days)
@@ -104,7 +112,7 @@ def get_website_request_hotels(response: str, user_id) -> list:
 
 def sorted_list_hotels(count_cities: str, flag) -> list:
     """
-    Функция сортирующая список отелей по цене.
+    Функция сортирующая список отелей по цене и расстоянию до центра.
 
     :param count_cities: str
     :return: list
